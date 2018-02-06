@@ -1,0 +1,25 @@
+language: python
+python:
+  - '2.7'
+before_install:
+  - openssl aes-256-cbc -K $encrypted_9e7e1ed4d5b1_key -iv $encrypted_9e7e1ed4d5b1_iv -in secret.json.enc -out secret.json -d
+  - openssl aes-256-cbc -K $encrypted_slacktoken_key -iv $encrypted_slacktoken_iv -in slack_secret.py.enc -out slack_secret.py -d
+  - pushd $HOME
+  - python $TRAVIS_BUILD_DIR/ciscripts/getlatestsdk.py
+  - unzip -q python_appengine_sdk-latest.zip
+  - cd google_appengine
+  - export GAE=$(pwd)
+  - export PYTHONPATH=$GAE:$PYTHONPATH
+  - export PYTHONPATH=$GAE/lib/yaml/lib:$PYTHONPATH
+  - export PYTHONPATH=$TRAVIS_BUILD_DIR/lib:$PYTHONPATH
+  - popd
+install:
+  - pip install -r requirements.txt
+  - pip install -r requirements-vendor.txt -t lib/
+script: py.test front/tests/*
+deploy:
+  provider: gae
+  skip_cleanup: true
+  keyfile: secret.json
+  project: notificate-slack-event
+  version: 0-0-1
